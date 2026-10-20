@@ -1,0 +1,129 @@
+:root {
+  --grass: #4caf50;
+  --grass-dark: #2f7d32;
+  --dirt: #6d4c2f;
+  --dirt-dark: #3e2a19;
+  --ink: #1d2a1d;
+  --card: #ffffffee;
+  --accent: #ff9800;
+  --red: #e53935;
+}
+* { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+html, body { margin: 0; height: 100%; }
+body {
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  color: var(--ink);
+  background: linear-gradient(#87ceeb 0, #b7e4f7 22%, var(--grass) 22%, var(--grass-dark) 100%);
+  background-attachment: fixed;
+  overscroll-behavior: none;
+  user-select: none; -webkit-user-select: none;
+  touch-action: manipulation;
+}
+#app {
+  max-width: 480px; margin: 0 auto; min-height: 100%;
+  padding: calc(env(safe-area-inset-top) + 16px) 16px calc(env(safe-area-inset-bottom) + 16px);
+}
+.screen { display: none; flex-direction: column; align-items: stretch; gap: 14px; }
+.screen.active { display: flex; }
+
+h1 {
+  text-align: center; margin: 8px 0 0; font-size: 42px; line-height: 1.05;
+  color: #fff; text-shadow: 0 3px 0 var(--dirt-dark), 0 6px 14px #0004;
+  letter-spacing: -1px;
+}
+h1 span { color: var(--accent); }
+h2 { margin: 0; font-size: 18px; }
+h2 small { font-weight: 500; color: #666; }
+.tag { text-align: center; margin: 0; color: var(--ink); font-weight: 600; }
+.card {
+  background: var(--card); border-radius: 18px; padding: 14px;
+  box-shadow: 0 4px 16px #0003; display: flex; flex-direction: column; gap: 10px;
+}
+.card.center { align-items: center; text-align: center; }
+.row { display: flex; justify-content: space-between; align-items: center; }
+.hint { margin: 0; color: #555; font-size: 14px; }
+.hint.small { font-size: 12px; text-align: center; }
+
+.btn {
+  display: block; width: 100%; border: 0; border-radius: 14px; padding: 14px;
+  font: inherit; font-weight: 700; font-size: 17px; text-align: center; cursor: pointer;
+  transition: transform .08s;
+}
+.btn:active { transform: scale(.97); }
+.btn.primary { background: var(--accent); color: #fff; box-shadow: 0 5px 0 #b86b00; }
+.btn.secondary { background: #fff; color: var(--ink); box-shadow: 0 4px 0 #0002; border: 2px solid #ddd; }
+.btn.big { font-size: 22px; padding: 18px; }
+.link { background: none; border: 0; font: inherit; color: var(--ink); text-decoration: underline; cursor: pointer; padding: 6px; }
+.link.light { color: #fff; }
+.best { text-align: center; margin: 0; color: #fff; font-weight: 600; }
+
+.thumbs { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; }
+.thumbs:empty { display: none; }
+.thumb { position: relative; aspect-ratio: 1; }
+.thumb img { width: 100%; height: 100%; object-fit: cover; border-radius: 50%; border: 3px solid var(--dirt); }
+.thumb button {
+  position: absolute; top: -6px; right: -6px; width: 22px; height: 22px; border-radius: 50%;
+  border: 0; background: var(--red); color: #fff; font-size: 13px; line-height: 22px; padding: 0;
+}
+
+.seg { display: flex; background: #eee; border-radius: 12px; padding: 4px; }
+.seg button { flex: 1; border: 0; background: none; font: inherit; font-weight: 600; padding: 10px; border-radius: 9px; }
+.seg button.on { background: #fff; box-shadow: 0 2px 6px #0002; }
+
+/* GAME */
+.hud { display: flex; justify-content: space-between; align-items: center; color: #fff; text-shadow: 0 2px 4px #0006; }
+.hud > div:not(.combo) { display: flex; flex-direction: column; align-items: center; min-width: 70px; }
+.hud .lbl, .lbl { font-size: 12px; text-transform: uppercase; letter-spacing: 1px; opacity: .85; }
+.hud b { font-size: 32px; }
+.combo { font-weight: 800; font-size: 20px; color: #ffeb3b; min-height: 24px; }
+.combo.pop { animation: pop .3s; }
+.timebar { height: 8px; background: #0003; border-radius: 4px; overflow: hidden; }
+#timebarFill { height: 100%; width: 100%; background: #ffeb3b; transition: width .1s linear; }
+#timebarFill.low { background: var(--red); }
+
+.board { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; margin-top: 10px; }
+.hole {
+  position: relative; aspect-ratio: 1; overflow: hidden;
+  border-radius: 50% 50% 46% 46% / 30% 30% 70% 70%;
+}
+.hole::before { /* dark pit */
+  content: ""; position: absolute; left: 6%; right: 6%; bottom: 6%; height: 38%;
+  background: radial-gradient(ellipse at center, #000 0, var(--dirt-dark) 60%, var(--dirt) 100%);
+  border-radius: 50%; z-index: 0;
+}
+.hole::after { /* front dirt lip covering the mole's bottom */
+  content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 24%;
+  background: linear-gradient(var(--dirt), var(--dirt-dark));
+  border-radius: 0 0 50% 50% / 0 0 100% 100%; z-index: 2;
+}
+.mole {
+  position: absolute; left: 14%; width: 72%; aspect-ratio: 1; bottom: 12%;
+  border-radius: 50%; overflow: hidden; z-index: 1;
+  transform: translateY(110%); transition: transform .14s ease-out;
+  border: 4px solid #fff; box-shadow: 0 4px 10px #0006;
+  background: #8d6e63 center/cover no-repeat;
+  display: flex; align-items: center; justify-content: center; font-size: 56px;
+}
+.mole.up { transform: translateY(0); }
+.mole.hit { transform: translateY(0) scale(.85, .7); filter: brightness(1.3) saturate(.5); transition: transform .06s; }
+.hole .fx {
+  position: absolute; top: 4%; left: 50%; transform: translateX(-50%); z-index: 3;
+  font-weight: 900; font-size: 22px; color: #fff; text-shadow: 0 2px 0 #c62828, 0 0 6px #000;
+  pointer-events: none; animation: rise .6s forwards;
+}
+.hole .star { position: absolute; z-index: 3; font-size: 40px; top: 20%; left: 50%; transform: translate(-50%,0); pointer-events: none; animation: bonk .35s forwards; }
+
+.countdown {
+  position: fixed; inset: 0; display: flex; align-items: center; justify-content: center;
+  font-size: 120px; font-weight: 900; color: #fff; text-shadow: 0 6px 0 var(--dirt-dark);
+  background: #0004; z-index: 10;
+}
+.countdown span { animation: pop .8s; }
+
+.final { font-size: 72px; font-weight: 900; margin: 0; color: var(--accent); }
+.newbest { margin: 0; font-weight: 800; font-size: 20px; animation: pop .6s; }
+.stats { margin: 0; color: #444; }
+
+@keyframes pop { 0% { transform: scale(.4); opacity: 0 } 60% { transform: scale(1.2) } 100% { transform: scale(1); opacity: 1 } }
+@keyframes rise { from { opacity: 1; transform: translate(-50%, 0) } to { opacity: 0; transform: translate(-50%, -30px) } }
+@keyframes bonk { from { opacity: 1; transform: translate(-50%,0) scale(.5) rotate(0) } to { opacity: 0; transform: translate(-50%,0) scale(1.4) rotate(40deg) } }
