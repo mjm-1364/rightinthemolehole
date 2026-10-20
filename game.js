@@ -19,7 +19,8 @@
     set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); return true; } catch { return false; } },
   };
 
-  let photos = store.get("wam.photos", []);       // array of dataURLs
+  // array of { src: dataURL, name: string } (older saves were plain dataURL strings)
+  let photos = store.get("wam.photos", []).map((p) => (typeof p === "string" ? { src: p, name: "" } : p));
   let difficulty = store.get("wam.difficulty", "normal");
   let soundOn = store.get("wam.sound", true);
   const bestKey = () => "wam.best." + difficulty;
@@ -80,20 +81,60 @@
     let skipped = 0;
     for (const f of files) {
       if (photos.length >= MAX_PHOTOS) { skipped++; continue; }
-      try { photos.push(cropToSquare(await loadImage(f))); } catch { skipped++; }
+      try { photos.push({ src: cropToSquare(await loadImage(f)), name: "" }); } catch { skipped++; }
     }
-    while (!store.set("wam.photos", photos) && photos.length) photos.pop(); // storage full: drop extras
-    renderThumbs();
+    savePhotos();
     if (skipped) alert(`${skipped} photo(s) couldn't be added (limit is ${MAX_PHOTOS}, or the format isn't supported).`);
   });
+  function savePhotos() {
+    while (!store.set("wam.photos", photos) && photos.length) photos.pop(); // storage full: drop extras
+    renderThumbs();
+  }
+
+  // ---------- Contact import (Contact Picker API: Android Chrome) ----------
+  const canPickContacts = "contacts" in navigator && "select" in navigator.contacts;
+  $("contactsBtn").onclick = async () => {
+    if (!canPickContacts) {
+      const iOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+      alert(iOS
+        ? "iPhone doesn't let websites open your contacts yet.\n\nTip: open a contact, take a screenshot of their photo, then use \"Add photos\"."
+        : "This browser can't open your contacts. Try Chrome on Android, or use \"Add photos\".");
+      return;
+    }
+    try {
+      const props = await navigator.contacts.getProperties().catch(() => ["name", "icon"]);
+      if (!props.includes("icon")) { alert("This phone doesn't share contact photos with apps. Use \"Add photos\" instead."); return; }
+      const picked = await navigator.contacts.select(["name", "icon"], { multiple: true });
+      let added = 0, noPhoto = 0, full = 0;
+      for (const c of picked) {
+        const icon = c.icon && c.icon[0];
+        if (!icon) { noPhoto++; continue; }
+        if (photos.length >= MAX_PHOTOS) { full++; continue; }
+        try {
+          const name = ((c.name && c.name[0]) || "").split(" ")[0];
+          photos.push({ src: cropToSquare(await loadImage(icon)), name });
+          added++;
+        } catch { noPhoto++; }
+      }
+      savePhotos();
+      const notes = [];
+      if (noPhoto) notes.push(`${noPhoto} contact(s) had no photo`);
+      if (full) notes.push(`${full} skipped (limit is ${MAX_PHOTOS})`);
+      if (picked.length && notes.length) alert(`Added ${added}. ${notes.join(", ")}.`);
+    } catch (err) {
+      if (err && err.name !== "AbortError") alert("Couldn't open contacts: " + (err.message || err));
+    }
+  };
   function renderThumbs() {
     const box = $("thumbs");
     box.innerHTML = "";
-    photos.forEach((src, i) => {
+    photos.forEach((p, i) => {
       const d = document.createElement("div");
       d.className = "thumb";
-      d.innerHTML = `<img alt="mole photo ${i + 1}"><button aria-label="Remove">✕</button>`;
-      d.querySelector("img").src = src;
+      d.innerHTML = `<img alt=""><button aria-label="Remove">✕</button><span></span>`;
+      d.querySelector("img").src = p.src;
+      d.querySelector("img").alt = p.name || `mole photo ${i + 1}`;
+      d.querySelector("span").textContent = p.name;
       d.querySelector("button").onclick = () => { photos.splice(i, 1); store.set("wam.photos", photos); renderThumbs(); };
       box.appendChild(d);
     });
@@ -143,9 +184,11 @@
       let idx;
       do { idx = Math.floor(Math.random() * photos.length); } while (photos.length > 1 && idx === state.lastPhoto);
       state.lastPhoto = idx;
-      h.mole.style.backgroundImage = `url("${photos[idx]}")`;
+      h.mole.style.backgroundImage = `url("${photos[idx].src}")`;
       h.mole.textContent = "";
+      h.name = photos[idx].name;
     } else {
+      h.name = "";
       h.mole.style.backgroundImage = "";
       h.mole.textContent = DEFAULT_MOLE;
     }
@@ -192,7 +235,8 @@
     renderCombo();
     h.mole.classList.add("hit");
     sfx.hit(); buzz(25);
-    fx(h.hole, "fx", (points > 1 ? `+${points} ` : "") + HIT_WORDS[Math.floor(Math.random() * HIT_WORDS.length)]);
+    const word = h.name ? `BONK ${h.name.toUpperCase()}!` : HIT_WORDS[Math.floor(Math.random() * HIT_WORDS.length)];
+    fx(h.hole, "fx", (points > 1 ? `+${points} ` : "") + word);
     fx(h.hole, "star", "💥");
     setTimeout(() => hide(h, false), 180);
   }

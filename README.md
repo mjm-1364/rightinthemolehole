@@ -8,6 +8,7 @@ To install it like an app: in Safari tap **Share → Add to Home Screen**; in Ch
 
 ## Features
 - Import photos from your phone — they're cropped into round "moles"
+- Pick contact photos straight from your contact list (Android Chrome; iPhone browsers don't allow this yet)
 - Photos stay on the phone; nothing is uploaded anywhere
 - 30-second rounds that speed up as time runs out
 - Easy / Normal / Hard, with a best score saved for each

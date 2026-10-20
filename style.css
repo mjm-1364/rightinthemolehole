@@ -67,6 +67,13 @@ h2 small { font-weight: 500; color: #666; }
   border: 0; background: var(--red); color: #fff; font-size: 13px; line-height: 22px; padding: 0;
 }
 
+.thumb span {
+  position: absolute; left: 50%; bottom: -6px; transform: translateX(-50%); max-width: 110%;
+  background: var(--dirt); color: #fff; font-size: 10px; font-weight: 700; padding: 1px 5px;
+  border-radius: 6px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.thumb span:empty { display: none; }
+.board .hole .fx { white-space: nowrap; font-size: 18px; }
 .seg { display: flex; background: #eee; border-radius: 12px; padding: 4px; }
 .seg button { flex: 1; border: 0; background: none; font: inherit; font-weight: 600; padding: 10px; border-radius: 9px; }
 .seg button.on { background: #fff; box-shadow: 0 2px 6px #0002; }
