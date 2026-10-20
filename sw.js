@@ -1,5 +1,5 @@
 // Offline support: cache the app shell, serve network-first so testers always get updates.
-const CACHE = "wam-v1";
+const CACHE = "wam-v2";
 const ASSETS = ["./", "index.html", "style.css", "game.js", "manifest.webmanifest", "icon.svg", "icon-192.png", "icon-512.png"];
 
 self.addEventListener("install", (e) => {
